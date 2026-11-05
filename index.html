@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Pro | Gestión de Streaming</title>
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --surface: #111827;
+      --surface-card: #1f2937;
+      --border: #374151;
+      --text: #f9fafb;
+      --text-dim: #9ca3af;
+      --primary: #38bdf8;
+      --primary-hover: #0284c7;
+      --accent: #6366f1;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 70px; }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0.9rem 1.4rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .brand { font-size: 1.15rem; font-weight: 800; letter-spacing: -0.02em; display: flex; align-items: center; gap: 8px; }
+    .brand span { color: var(--primary); }
+
+    .menu-wrap { position: relative; }
+    .btn-dots {
+      background: #1e293b;
+      border: 1px solid var(--border);
+      color: var(--text);
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      font-size: 1.3rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: 0.15s;
+    }
+    .btn-dots:hover { border-color: var(--primary); }
+    .dropdown {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 8px);
+      width: 220px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: 0 16px 30px rgba(0,0,0,0.6);
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 110;
+    }
+    .dropdown.show { display: flex; }
+    .dropdown-item {
+      background: none;
+      border: none;
+      color: var(--text);
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: 0.15s;
+    }
+    .dropdown-item:hover { background: var(--surface-card); color: var(--primary); }
+    .dropdown-divider { height: 1px; background: var(--border); margin: 4px 0; }
+
+    .container { max-width: 1200px; margin: 1.5rem auto; padding: 0 1rem; }
+
+    .metrics-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0.85rem;
+      margin-bottom: 1.5rem;
+    }
+    .metric-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.9rem 1.1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .metric-card .label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); }
+    .metric-card .value { font-size: 1.25rem; font-weight: 700; color: #fff; }
+    .metric-card .value.net-ars { color: #34d399; }
+    .metric-card .value.net-usd { color: #38bdf8; }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      background: var(--surface);
+      padding: 1rem;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+    .tabs { display: flex; gap: 6px; }
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: 0.15s;
+    }
+    .tab-btn.active { background: var(--primary); color: #0b0f19; }
+
+    .search-filter-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      flex: 1;
+      max-width: 650px;
+      justify-content: flex-end;
+    }
+    .input-search, .select-filter {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+    }
+    .input-search { flex: 1; min-width: 180px; }
+    .btn-create {
+      background: var(--primary);
+      color: #0b0f19;
+      font-weight: 700;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    .btn-create:hover { background: var(--primary-hover); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+      gap: 1rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.1rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 0.9rem;
+      position: relative;
+    }
+    .card:hover { border-color: #4b5563; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+    .card-title { font-size: 1.05rem; font-weight: 700; color: #fff; }
+    
+    .badge {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+    .badge-ok { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-warn { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-expired { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .badge-note { background: rgba(99, 102, 241, 0.15); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.3); }
+
+    .card-details {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 0.85rem;
+      color: var(--text-dim);
+    }
+    .card-row { display: flex; justify-content: space-between; align-items: center; }
+    .card-row span.val { color: var(--text); font-weight: 500; }
+    
+    .pin-badge {
+      background: #1e1b4b;
+      color: #a5b4fc;
+      border: 1px solid #4338ca;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+
+    .credential-box {
+      background: var(--bg);
+      border: 1px solid #1f2937;
+      padding: 6px 10px;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: monospace;
+      font-size: 0.82rem;
+      color: #93c5fd;
+    }
+    .credential-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .note-content-box {
+      background: var(--bg);
+      border: 1px solid #1f2937;
+      padding: 10px;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 0.85rem;
+      color: #e2e8f0;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+
+    .btn-copy {
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .btn-copy:hover { color: #fff; background: var(--surface-card); }
+
+    .btn-eye {
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      font-size: 0.82rem;
+      padding: 2px 5px;
+      border-radius: 4px;
+    }
+    .btn-eye:hover { color: var(--primary); background: var(--surface-card); }
+
+    .card-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+      padding-top: 0.6rem;
+      border-top: 1px solid var(--border);
+    }
+    .action-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+    .btn-wsp {
+      background: #059669;
+      color: #fff;
+      text-decoration: none;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 6px 9px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .btn-wsp:hover { background: #10b981; }
+
+    .btn-renew {
+      background: #1e293b;
+      border: 1px solid #0284c7;
+      color: #38bdf8;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 5px 9px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: 0.15s;
+    }
+    .btn-renew:hover { background: #0284c7; color: #fff; }
+
+    .btn-edit {
+      background: #1e293b;
+      border: 1px solid #eab308;
+      color: #facc15;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 5px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .btn-edit:hover { background: #ca8a04; color: #fff; }
+
+    .btn-history {
+      background: #312e81;
+      border: 1px solid #4338ca;
+      color: #c7d2fe;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 5px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .btn-history:hover { background: #4338ca; color: #fff; }
+
+    .btn-danger-outline {
+      background: transparent;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #f87171;
+      padding: 5px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+    .btn-danger-outline:hover { background: var(--danger); color: #fff; }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(4px);
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      z-index: 300;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      width: 100%;
+      max-width: 500px;
+      padding: 1.5rem;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-box h3 { margin-bottom: 1.2rem; font-size: 1.2rem; }
+    .form-group { margin-bottom: 0.9rem; }
+    .form-group label { display: block; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-dim); margin-bottom: 4px; }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 9px 12px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+    }
+    .form-group textarea {
+      resize: vertical;
+      min-height: 100px;
+      font-family: monospace;
+    }
+    .form-row { display: flex; gap: 8px; }
+    
+    .input-with-button {
+      display: flex;
+      gap: 6px;
+    }
+    .btn-generate-pin {
+      background: #1e1b4b;
+      border: 1px solid #4338ca;
+      color: #a5b4fc;
+      font-weight: 700;
+      padding: 0 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      white-space: nowrap;
+      transition: 0.15s;
+    }
+    .btn-generate-pin:hover {
+      background: #4338ca;
+      color: #fff;
+    }
+
+    .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 1.5rem; }
+    .btn-cancel {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .history-list {
+      overflow-y: auto;
+      max-height: 320px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.85rem;
+    }
+    .history-item:last-child { border-bottom: none; }
+    .history-date { color: var(--text-dim); font-size: 0.8rem; }
+    .history-total {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 10px;
+      border-radius: 8px;
+      margin-top: 10px;
+      font-size: 0.9rem;
+      display: flex;
+      justify-content: space-between;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">⚡ PANEL <span>GESTIÓN</span></div>
+    <div class="menu-wrap">
+      <button class="btn-dots" id="dotsToggle" aria-label="Menú">&#8942;</button>
+      <div class="dropdown" id="dropdownList">
+        <button type="button" class="dropdown-item" id="menuItemClientes">👥 Clientes</button>
+        <button type="button" class="dropdown-item" id="menuItemProveedores">📦 Proveedores</button>
+        <button type="button" class="dropdown-item" id="menuItemNotas">📝 Notas & Pines</button>
+        <div class="dropdown-divider"></div>
+        <button type="button" class="dropdown-item" id="btnDescargarBackup">💾 Descargar Backup JSON</button>
+        <button type="button" class="dropdown-item" id="btnRestaurarBackup">📥 Restaurar Backup</button>
+        <button type="button" class="dropdown-item" id="btnResetMemoria" style="color: #f87171;">⚠️ Reiniciar Almacenamiento</button>
+      </div>
+    </div>
+  </header>
+  <input type="file" id="fileInput" style="display:none">
+
+  <div class="container">
+    
+    <div class="metrics-bar">
+      <div class="metric-card">
+        <span class="label">Clientes Activos</span>
+        <span class="value" id="totalClientes">0</span>
+      </div>
+      <div class="metric-card">
+        <span class="label">Ganancia Neta (ARS)</span>
+        <span class="value net-ars" id="netoARS">$0</span>
+      </div>
+      <div class="metric-card">
+        <span class="label">Ganancia Neta (USD)</span>
+        <span class="value net-usd" id="netoUSD">u$s 0</span>
+      </div>
+      <div class="metric-card">
+        <span class="label">Ventas Brutas</span>
+        <span class="value" style="font-size: 0.95rem; color: var(--text-dim);" id="ventasTotales">$0 / u$s 0</span>
+      </div>
+      <div class="metric-card">
+        <span class="label">Costos Proveedores</span>
+        <span class="value" style="font-size: 0.95rem; color: #f87171;" id="costosTotales">$0 / u$s 0</span>
+      </div>
+      <div class="metric-card">
+        <span class="label">Vence Pronto (≤ 3d)</span>
+        <span class="value" style="color: var(--warning);" id="totalPorVencer">0</span>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="tabs">
+        <button type="button" class="tab-btn active" id="tabClientes">Clientes</button>
+        <button type="button" class="tab-btn" id="tabProveedores">Proveedores</button>
+        <button type="button" class="tab-btn" id="tabNotas">Notas</button>
+      </div>
+      
+      <div class="search-filter-wrap">
+        <input type="text" class="input-search" id="inputSearch" placeholder="Buscar...">
+        <select class="select-filter" id="filtroVencimiento">
+          <option value="todos">Todos los registros</option>
+          <option value="por_vencer">Vence pronto (≤ 3 días)</option>
+          <option value="vencidos">Ya vencidos</option>
+          <option value="activos">Al día</option>
+        </select>
+        <button type="button" class="btn-create" id="btnCrearTexto">+ Nuevo</button>
+      </div>
+    </div>
+
+    <div class="grid" id="gridItems"></div>
+
+  </div>
+
+  <!-- Modal Cliente -->
+  <div class="modal-overlay" id="modalCliente">
+    <div class="modal-box">
+      <h3 id="modalClienteTitulo">Registrar Nuevo Cliente</h3>
+      <form id="fCliente">
+        <input type="hidden" id="fcEditId">
+        <div class="form-group">
+          <label>Nombre del Cliente</label>
+          <input type="text" id="fcNombre" required placeholder="Ej: Lucas Martínez">
+        </div>
+        <div class="form-group">
+          <label>Número WhatsApp (sin signos ni espacios)</label>
+          <input type="tel" id="fcWsp" required placeholder="Ej: 5491122334455">
+        </div>
+        <div class="form-group">
+          <label>Plataforma</label>
+          <input type="text" id="fcPlataforma" required placeholder="Netflix, Disney+, Max...">
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group" style="flex:1">
+            <label>N° de Perfil</label>
+            <select id="fcPerfil">
+              <option value="Perfil 1">Perfil 1</option>
+              <option value="Perfil 2">Perfil 2</option>
+              <option value="Perfil 3">Perfil 3</option>
+              <option value="Perfil 4">Perfil 4</option>
+              <option value="Perfil 5">Perfil 5</option>
+              <option value="Cuenta Completa">Cuenta Completa</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex:1.2">
+            <label>PIN de Perfil (Opcional)</label>
+            <div class="input-with-button">
+              <input type="text" id="fcPin" placeholder="Ej: 1234" maxlength="6">
+              <button type="button" class="btn-generate-pin" id="btnGenPinCliente">🎲 PIN</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group" style="flex:1">
+            <label>Precio Cobrado ARS ($)</label>
+            <input type="number" id="fcArs" placeholder="Ej: 4500" value="0">
+          </div>
+          <div class="form-group" style="flex:1">
+            <label>Precio Cobrado USD (u$s)</label>
+            <input type="number" step="0.5" id="fcUsd" placeholder="Ej: 4.5" value="0">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Fecha de Vencimiento</label>
+          <input type="date" id="fcFecha" required>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel btn-cerrar-modal">Cancelar</button>
+          <button type="submit" class="btn-create">Guardar Cliente</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Proveedor -->
+  <div class="modal-overlay" id="modalProveedor">
+    <div class="modal-box">
+      <h3 id="modalProveedorTitulo">Registrar Cuenta Proveedor</h3>
+      <form id="fProveedor">
+        <input type="hidden" id="fpEditId">
+        <div class="form-row">
+          <div class="form-group" style="flex:1">
+            <label>Plataforma</label>
+            <input type="text" id="fpPlataforma" required placeholder="Ej: Paramount+">
+          </div>
+          <div class="form-group" style="flex:1">
+            <label>Tipo de Cuenta</label>
+            <input type="text" id="fpTipo" required placeholder="5 perfiles / Completa">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Correo / Usuario</label>
+          <input type="text" id="fpCorreo" required placeholder="cuenta@correo.com">
+        </div>
+        <div class="form-group">
+          <label>Contraseña</label>
+          <input type="text" id="fpPassword" required placeholder="Pass1234!">
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group" style="flex:1">
+            <label>Costo de Compra ARS ($)</label>
+            <input type="number" id="fpCostoArs" placeholder="Ej: 3000" value="0">
+          </div>
+          <div class="form-group" style="flex:1">
+            <label>Costo de Compra USD (u$s)</label>
+            <input type="number" step="0.5" id="fpCostoUsd" placeholder="Ej: 3" value="0">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Fecha de Vencimiento Cuenta</label>
+          <input type="date" id="fpFecha" required>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel btn-cerrar-modal">Cancelar</button>
+          <button type="submit" class="btn-create">Guardar Proveedor</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Notas -->
+  <div class="modal-overlay" id="modalNota">
+    <div class="modal-box">
+      <h3 id="modalNotaTitulo">Nueva Nota o Credencial</h3>
+      <form id="fNota">
+        <input type="hidden" id="fnEditId">
+        <div class="form-group">
+          <label>Título o Identificador</label>
+          <input type="text" id="fnTitulo" required placeholder="Ej: PIN Maestro Disney / Cuentas de Respaldo Max">
+        </div>
+        <div class="form-group">
+          <label>Categoría</label>
+          <select id="fnCategoria">
+            <option value="PIN">PIN / Claves Maestras</option>
+            <option value="Cuentas">Cuentas y Contraseñas</option>
+            <option value="Proveedor">Datos de Proveedores</option>
+            <option value="General">Nota General / Enlaces</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <label style="margin-bottom:0;">Detalle / Contraseñas / Pines</label>
+            <button type="button" class="btn-generate-pin" id="btnGenPinNota">🎲 Pegar PIN</button>
+          </div>
+          <textarea id="fnDetalle" required placeholder="Anota acá correos, contraseñas, pines por perfil o notas rápidas..."></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel btn-cerrar-modal">Cancelar</button>
+          <button type="submit" class="btn-create">Guardar Nota</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Historial -->
+  <div class="modal-overlay" id="modalHistorial">
+    <div class="modal-box">
+      <h3 id="historialTitulo">Historial de Pagos</h3>
+      <div id="historialResumen" class="history-total"></div>
+      <div class="history-list" id="historialItems"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel btn-cerrar-modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Carga y validación estricta de datos
+      function safeParse(key) {
+        try {
+          const raw = localStorage.getItem(key);
+          const parsed = JSON.parse(raw);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch (e) {
+          console.warn('Inconsistencia en localStorage para:', key);
+          return [];
+        }
+      }
+
+      let state = {
+        vista: 'clientes',
+        clientes: safeParse('app_data_clientes'),
+        proveedores: safeParse('app_data_proveedores'),
+        notas: safeParse('app_data_notas')
+      };
+
+      let contrasenasVisibles = {};
+
+      // DOM Elements
+      const dotsBtn = document.getElementById('dotsToggle');
+      const dropdown = document.getElementById('dropdownList');
+      const tabClientes = document.getElementById('tabClientes');
+      const tabProveedores = document.getElementById('tabProveedores');
+      const tabNotas = document.getElementById('tabNotas');
+      const btnCrear = document.getElementById('btnCrearTexto');
+      const inputSearch = document.getElementById('inputSearch');
+      const filtroVencimiento = document.getElementById('filtroVencimiento');
+      const fileInput = document.getElementById('fileInput');
+
+      // Modales
+      const modalCliente = document.getElementById('modalCliente');
+      const modalProveedor = document.getElementById('modalProveedor');
+      const modalNota = document.getElementById('modalNota');
+      const modalHistorial = document.getElementById('modalHistorial');
+
+      // Botón 3 Puntos
+      dotsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdown.classList.toggle('show');
+      });
+
+      window.addEventListener('click', () => {
+        dropdown.classList.remove('show');
+      });
+
+      dropdown.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+
+      // Menú de 3 puntos bindings
+      document.getElementById('menuItemClientes').addEventListener('click', () => cambiarSeccion('clientes'));
+      document.getElementById('menuItemProveedores').addEventListener('click', () => cambiarSeccion('proveedores'));
+      document.getElementById('menuItemNotas').addEventListener('click', () => cambiarSeccion('notas'));
+      document.getElementById('btnDescargarBackup').addEventListener('click', descargarJSON);
+      document.getElementById('btnRestaurarBackup').addEventListener('click', () => fileInput.click());
+      document.getElementById('btnResetMemoria').addEventListener('click', () => {
+        if (confirm('¿Deseas vaciar la memoria de la app por completo? Esto resolverá cualquier traba de datos corruptos.')) {
+          localStorage.clear();
+          location.reload();
+        }
+      });
+
+      // Tabs bindings
+      tabClientes.addEventListener('click', () => cambiarSeccion('clientes'));
+      tabProveedores.addEventListener('click', () => cambiarSeccion('proveedores'));
+      tabNotas.addEventListener('click', () => cambiarSeccion('notas'));
+
+      btnCrear.addEventListener('click', abrirModalNuevo);
+      inputSearch.addEventListener('input', filtrar);
+      filtroVencimiento.addEventListener('change', filtrar);
+      fileInput.addEventListener('change', cargarJSON);
+
+      // Generadores de PIN
+      document.getElementById('btnGenPinCliente').addEventListener('click', () => {
+        const pin = Math.floor(1000 + Math.random() * 9000).toString();
+        document.getElementById('fcPin').value = pin;
+      });
+
+      document.getElementById('btnGenPinNota').addEventListener('click', () => {
+        const pin = Math.floor(1000 + Math.random() * 9000).toString();
+        const txt = document.getElementById('fnDetalle');
+        txt.value += (txt.value ? '\n' : '') + `PIN: ${pin}`;
+      });
+
+      // Cerrar modales con botones cancelar
+      document.querySelectorAll('.btn-cerrar-modal').forEach(btn => {
+        btn.addEventListener('click', cerrarModales);
+      });
+
+      function cambiarSeccion(seccion) {
+        state.vista = seccion;
+        tabClientes.classList.toggle('active', seccion === 'clientes');
+        tabProveedores.classList.toggle('active', seccion === 'proveedores');
+        tabNotas.classList.toggle('active', seccion === 'notas');
+        dropdown.classList.remove('show');
+
+        filtroVencimiento.style.display = (seccion === 'notas') ? 'none' : 'block';
+        btnCrear.innerText = (seccion === 'notas') ? '+ Nueva Nota' : '+ Nuevo';
+
+        filtrar();
+      }
+
+      function abrirModalNuevo() {
+        if (state.vista === 'clientes') {
+          document.getElementById('fCliente').reset();
+          document.getElementById('fcEditId').value = '';
+          document.getElementById('modalClienteTitulo').innerText = 'Registrar Nuevo Cliente';
+          modalCliente.classList.add('active');
+        } else if (state.vista === 'proveedores') {
+          document.getElementById('fProveedor').reset();
+          document.getElementById('fpEditId').value = '';
+          document.getElementById('modalProveedorTitulo').innerText = 'Registrar Cuenta Proveedor';
+          modalProveedor.classList.add('active');
+        } else {
+          document.getElementById('fNota').reset();
+          document.getElementById('fnEditId').value = '';
+          document.getElementById('modalNotaTitulo').innerText = 'Nueva Nota o Credencial';
+          modalNota.classList.add('active');
+        }
+      }
+
+      function cerrarModales() {
+        modalCliente.classList.remove('active');
+        modalProveedor.classList.remove('active');
+        modalNota.classList.remove('active');
+        modalHistorial.classList.remove('active');
+      }
+
+      // Submit Cliente
+      document.getElementById('fCliente').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const editId = document.getElementById('fcEditId').value;
+        const ars = Number(document.getElementById('fcArs').value) || 0;
+        const usd = Number(document.getElementById('fcUsd').value) || 0;
+        const vencimiento = document.getElementById('fcFecha').value;
+
+        if (editId) {
+          const item = state.clientes.find(c => c.id === Number(editId));
+          if (item) {
+            item.nombre = document.getElementById('fcNombre').value.trim();
+            item.whatsapp = document.getElementById('fcWsp').value.trim().replace(/\+/g, '').replace(/\s/g, '');
+            item.plataforma = document.getElementById('fcPlataforma').value.trim();
+            item.perfil = document.getElementById('fcPerfil').value;
+            item.pin = document.getElementById('fcPin').value.trim() || 'Sin PIN';
+            item.ars = ars;
+            item.usd = usd;
+            item.vencimiento = vencimiento;
+          }
+        } else {
+          state.clientes.push({
+            id: Date.now(),
+            nombre: document.getElementById('fcNombre').value.trim(),
+            whatsapp: document.getElementById('fcWsp').value.trim().replace(/\+/g, '').replace(/\s/g, ''),
+            plataforma: document.getElementById('fcPlataforma').value.trim(),
+            perfil: document.getElementById('fcPerfil').value,
+            pin: document.getElementById('fcPin').value.trim() || 'Sin PIN',
+            ars: ars,
+            usd: usd,
+            vencimiento: vencimiento,
+            historial: [{
+              fecha: new Date().toLocaleDateString('es-AR'),
+              tipo: 'Pago Alta / Inicio',
+              ars: ars,
+              usd: usd,
+              vencimiento: vencimiento
+            }]
+          });
+        }
+
+        guardarStorage();
+        cerrarModales();
+        filtrar();
+      });
+
+      // Submit Proveedor
+      document.getElementById('fProveedor').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const editId = document.getElementById('fpEditId').value;
+        const costoArs = Number(document.getElementById('fpCostoArs').value) || 0;
+        const costoUsd = Number(document.getElementById('fpCostoUsd').value) || 0;
+
+        if (editId) {
+          const item = state.proveedores.find(p => p.id === Number(editId));
+          if (item) {
+            item.plataforma = document.getElementById('fpPlataforma').value.trim();
+            item.tipo = document.getElementById('fpTipo').value.trim();
+            item.correo = document.getElementById('fpCorreo').value.trim();
+            item.password = document.getElementById('fpPassword').value.trim();
+            item.costoArs = costoArs;
+            item.costoUsd = costoUsd;
+            item.vencimiento = document.getElementById('fpFecha').value;
+          }
+        } else {
+          state.proveedores.push({
+            id: Date.now(),
+            plataforma: document.getElementById('fpPlataforma').value.trim(),
+            tipo: document.getElementById('fpTipo').value.trim(),
+            correo: document.getElementById('fpCorreo').value.trim(),
+            password: document.getElementById('fpPassword').value.trim(),
+            costoArs: costoArs,
+            costoUsd: costoUsd,
+            vencimiento: document.getElementById('fpFecha').value
+          });
+        }
+
+        guardarStorage();
+        cerrarModales();
+        filtrar();
+      });
+
+      // Submit Nota
+      document.getElementById('fNota').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const editId = document.getElementById('fnEditId').value;
+
+        if (editId) {
+          const item = state.notas.find(n => n.id === Number(editId));
+          if (item) {
+            item.titulo = document.getElementById('fnTitulo').value.trim();
+            item.categoria = document.getElementById('fnCategoria').value;
+            item.detalle = document.getElementById('fnDetalle').value.trim();
+          }
+        } else {
+          state.notas.push({
+            id: Date.now(),
+            titulo: document.getElementById('fnTitulo').value.trim(),
+            categoria: document.getElementById('fnCategoria').value,
+            detalle: document.getElementById('fnDetalle').value.trim(),
+            fecha: new Date().toLocaleDateString('es-AR')
+          });
+        }
+
+        guardarStorage();
+        cerrarModales();
+        filtrar();
+      });
+
+      function guardarStorage() {
+        localStorage.setItem('app_data_clientes', JSON.stringify(state.clientes));
+        localStorage.setItem('app_data_proveedores', JSON.stringify(state.proveedores));
+        localStorage.setItem('app_data_notas', JSON.stringify(state.notas));
+        actualizarMetricas();
+      }
+
+      function calcularDias(fechaStr) {
+        if (!fechaStr) return 999;
+        const hoy = new Date();
+        hoy.setHours(0,0,0,0);
+        const target = new Date(fechaStr + 'T00:00:00');
+        return Math.ceil((target - hoy) / (1000 * 60 * 60 * 24));
+      }
+
+      function resolverBadge(dias) {
+        if (dias < 0) return { texto: `Venció hace ${Math.abs(dias)}d`, clase: 'badge-expired', estado: 'vencidos' };
+        if (dias === 0) return { texto: '¡Vence HOY!', clase: 'badge-expired', estado: 'por_vencer' };
+        if (dias <= 3) return { texto: `Vence en ${dias}d`, clase: 'badge-warn', estado: 'por_vencer' };
+        return { texto: `${dias} días restantes`, clase: 'badge-ok', estado: 'activos' };
+      }
+
+      function copiarTexto(texto) {
+        navigator.clipboard.writeText(texto).then(() => alert('Copiado: ' + texto));
+      }
+
+      function actualizarMetricas() {
+        document.getElementById('totalClientes').innerText = state.clientes.length;
+        
+        const ventasArs = state.clientes.reduce((acc, c) => acc + (Number(c.ars) || 0), 0);
+        const ventasUsd = state.clientes.reduce((acc, c) => acc + (Number(c.usd) || 0), 0);
+
+        const costosArs = state.proveedores.reduce((acc, p) => acc + (Number(p.costoArs) || 0), 0);
+        const costosUsd = state.proveedores.reduce((acc, p) => acc + (Number(p.costoUsd) || 0), 0);
+
+        const netoArs = ventasArs - costosArs;
+        const netoUsd = ventasUsd - costosUsd;
+
+        document.getElementById('netoARS').innerText = `$ ${netoArs.toLocaleString('es-AR')}`;
+        document.getElementById('netoUSD').innerText = `u$s ${netoUsd.toFixed(2)}`;
+
+        document.getElementById('ventasTotales').innerText = `$ ${ventasArs.toLocaleString('es-AR')} / u$s ${ventasUsd.toFixed(2)}`;
+        document.getElementById('costosTotales').innerText = `$ ${costosArs.toLocaleString('es-AR')} / u$s ${costosUsd.toFixed(2)}`;
+
+        const porVencer = [...state.clientes, ...state.proveedores].filter(i => {
+          const d = calcularDias(i.vencimiento);
+          return d >= 0 && d <= 3;
+        }).length;
+        document.getElementById('totalPorVencer').innerText = porVencer;
+      }
+
+      function filtrar() {
+        const q = inputSearch.value.toLowerCase();
+        const fVenc = filtroVencimiento.value;
+        const listado = state[state.vista] || [];
+
+        let filtrados = listado;
+
+        if (state.vista === 'notas') {
+          filtrados = listado.filter(n => 
+            (n.titulo || '').toLowerCase().includes(q) || 
+            (n.detalle || '').toLowerCase().includes(q) || 
+            (n.categoria || '').toLowerCase().includes(q)
+          );
+        } else {
+          filtrados = listado.filter(item => {
+            const dias = calcularDias(item.vencimiento);
+            const { estado } = resolverBadge(dias);
+
+            if (fVenc !== 'todos' && fVenc !== estado) {
+              if (!(fVenc === 'por_vencer' && dias === 0)) return false;
+            }
+
+            if (state.vista === 'clientes') {
+              return (item.nombre || '').toLowerCase().includes(q) || 
+                     (item.plataforma || '').toLowerCase().includes(q) || 
+                     (item.perfil || '').toLowerCase().includes(q) || 
+                     (item.whatsapp || '').includes(q);
+            } else {
+              return (item.plataforma || '').toLowerCase().includes(q) || 
+                     (item.correo || '').toLowerCase().includes(q) || 
+                     (item.tipo || '').toLowerCase().includes(q);
+            }
+          });
+        }
+
+        renderGrid(filtrados);
+        actualizarMetricas();
+      }
+
+      function renderGrid(items) {
+        const grid = document.getElementById('gridItems');
+        grid.innerHTML = '';
+
+        if (!items || items.length === 0) {
+          grid.innerHTML = `<p style="grid-column: 1/-1; color: var(--text-dim); text-align: center; padding: 2.5rem 0;">No hay registros cargados.</p>`;
+          return;
+        }
+
+        if (state.vista === 'notas') {
+          items.forEach(nota => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+              <div>
+                <div class="card-top">
+                  <span class="card-title">${nota.titulo}</span>
+                  <span class="badge badge-note">${nota.categoria}</span>
+                </div>
+                <div class="card-details" style="margin-top: 10px;">
+                  <div class="note-content-box">${nota.detalle}</div>
+                </div>
+              </div>
+              <div class="card-actions">
+                <div class="action-group">
+                  <button type="button" class="btn-copy btn-copiar-nota" style="background:#1e293b; padding:5px 8px; border-radius:6px; font-size:0.8rem;">📋 Copiar Todo</button>
+                  <button type="button" class="btn-edit btn-editar-nota">✏️ Editar</button>
+                </div>
+                <button type="button" class="btn-danger-outline btn-borrar-item">Borrar</button>
+              </div>
+            `;
+            card.querySelector('.btn-copiar-nota').addEventListener('click', () => copiarTexto(nota.detalle));
+            card.querySelector('.btn-editar-nota').addEventListener('click', () => {
+              document.getElementById('fnEditId').value = nota.id;
+              document.getElementById('fnTitulo').value = nota.titulo;
+              document.getElementById('fnCategoria').value = nota.categoria;
+              document.getElementById('fnDetalle').value = nota.detalle;
+              document.getElementById('modalNotaTitulo').innerText = 'Editar Nota / Credencial';
+              modalNota.classList.add('active');
+            });
+            card.querySelector('.btn-borrar-item').addEventListener('click', () => {
+              if (confirm('¿Eliminar esta nota?')) {
+                state.notas = state.notas.filter(x => x.id !== nota.id);
+                guardarStorage();
+                filtrar();
+              }
+            });
+            grid.appendChild(card);
+          });
+          return;
+        }
+
+        items.sort((a, b) => new Date(a.vencimiento) - new Date(b.vencimiento));
+
+        items.forEach(item => {
+          const dias = calcularDias(item.vencimiento);
+          const badge = resolverBadge(dias);
+          const card = document.createElement('div');
+          card.className = 'card';
+
+          if (state.vista === 'clientes') {
+            const pinTexto = item.pin && item.pin !== 'Sin PIN' ? ` y tu PIN es: ${item.pin}` : '';
+            const mensajeWsp = encodeURIComponent(`Hola ${item.nombre}! Te escribo por tu cuenta de ${item.plataforma} (${item.perfil}${pinTexto}). Te recuerdo que vence el ${item.vencimiento}. ¡Avisame para renovar!`);
+
+            card.innerHTML = `
+              <div>
+                <div class="card-top">
+                  <span class="card-title">${item.nombre}</span>
+                  <span class="badge ${badge.clase}">${badge.texto}</span>
+                </div>
+                <div class="card-details" style="margin-top: 10px;">
+                  <div class="card-row"><span>Plataforma:</span> <span class="val">${item.plataforma}</span></div>
+                  <div class="card-row"><span>Asignación:</span> <span class="val" style="color: var(--primary); font-weight:700;">${item.perfil || 'Perfil 1'}</span></div>
+                  <div class="card-row">
+                    <span>PIN de Acceso:</span> 
+                    ${item.pin && item.pin !== 'Sin PIN' 
+                      ? `<span style="display:flex; align-items:center; gap:6px;">
+                           <span class="pin-badge">${item.pin}</span>
+                           <button type="button" class="btn-copy btn-copiar-pin">Copiar</button>
+                         </span>`
+                      : `<span class="val" style="color: var(--text-dim);">Sin PIN</span>`
+                    }
+                  </div>
+                  <div class="card-row"><span>Cobro Mensual:</span> <span class="val">$${Number(item.ars).toLocaleString('es-AR')} ARS / u$s ${item.usd}</span></div>
+                  <div class="card-row"><span>Vencimiento:</span> <span class="val">${item.vencimiento}</span></div>
+                </div>
+              </div>
+              <div class="card-actions">
+                <div class="action-group">
+                  <a class="btn-wsp" href="https://wa.me/${item.whatsapp}?text=${mensajeWsp}" target="_blank">💬 WSP</a>
+                  <button type="button" class="btn-renew btn-renovar-cliente" title="Sumar 30 días">🔄 +30d</button>
+                  <button type="button" class="btn-edit btn-editar-cliente">✏️</button>
+                  <button type="button" class="btn-history btn-historial-cliente">📜</button>
+                </div>
+                <button type="button" class="btn-danger-outline btn-borrar-cliente">Borrar</button>
+              </div>
+            `;
+
+            const btnCopiarPin = card.querySelector('.btn-copiar-pin');
+            if (btnCopiarPin) btnCopiarPin.addEventListener('click', () => copiarTexto(item.pin));
+
+            card.querySelector('.btn-renovar-cliente').addEventListener('click', () => {
+              const hoy = new Date();
+              hoy.setHours(0,0,0,0);
+              const fechaActual = new Date(item.vencimiento + 'T00:00:00');
+              let baseFecha = (fechaActual > hoy) ? fechaActual : hoy;
+              baseFecha.setDate(baseFecha.getDate() + 30);
+              const nuevoVenc = baseFecha.toISOString().slice(0, 10);
+              item.vencimiento = nuevoVenc;
+
+              if (!item.historial) item.historial = [];
+              item.historial.push({
+                fecha: new Date().toLocaleDateString('es-AR'),
+                tipo: 'Renovación +30 días',
+                ars: item.ars || 0,
+                usd: item.usd || 0,
+                vencimiento: nuevoVenc
+              });
+
+              guardarStorage();
+              filtrar();
+            });
+
+            card.querySelector('.btn-editar-cliente').addEventListener('click', () => {
+              document.getElementById('fcEditId').value = item.id;
+              document.getElementById('fcNombre').value = item.nombre;
+              document.getElementById('fcWsp').value = item.whatsapp;
+              document.getElementById('fcPlataforma').value = item.plataforma;
+              document.getElementById('fcPerfil').value = item.perfil || 'Perfil 1';
+              document.getElementById('fcPin').value = item.pin === 'Sin PIN' ? '' : item.pin;
+              document.getElementById('fcArs').value = item.ars;
+              document.getElementById('fcUsd').value = item.usd;
+              document.getElementById('fcFecha').value = item.vencimiento;
+              document.getElementById('modalClienteTitulo').innerText = 'Editar Datos del Cliente';
+              modalCliente.classList.add('active');
+            });
+
+            card.querySelector('.btn-historial-cliente').addEventListener('click', () => {
+              document.getElementById('historialTitulo').innerText = `Historial: ${item.nombre} (${item.plataforma})`;
+              const list = item.historial || [];
+              const totalArs = list.reduce((acc, h) => acc + (Number(h.ars) || 0), 0);
+              const totalUsd = list.reduce((acc, h) => acc + (Number(h.usd) || 0), 0);
+
+              document.getElementById('historialResumen').innerHTML = `
+                <span>Total Pagos: ${list.length}</span>
+                <span style="color:#34d399;">$ ${totalArs.toLocaleString('es-AR')} ARS | u$s ${totalUsd.toFixed(2)}</span>
+              `;
+
+              const container = document.getElementById('historialItems');
+              container.innerHTML = '';
+              [...list].reverse().forEach(h => {
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.innerHTML = `
+                  <div>
+                    <div style="font-weight:600; color:#fff;">${h.tipo}</div>
+                    <div class="history-date">${h.fecha} — Vence: ${h.vencimiento}</div>
+                  </div>
+                  <div style="font-weight:700; color:var(--primary);">$${(h.ars || 0).toLocaleString('es-AR')} / u$s ${h.usd || 0}</div>
+                `;
+                container.appendChild(div);
+              });
+              modalHistorial.classList.add('active');
+            });
+
+            card.querySelector('.btn-borrar-cliente').addEventListener('click', () => {
+              if (confirm('¿Eliminar este cliente?')) {
+                state.clientes = state.clientes.filter(x => x.id !== item.id);
+                guardarStorage();
+                filtrar();
+              }
+            });
+
+          } else {
+            // Proveedor
+            const isVisible = !!contrasenasVisibles[item.id];
+            card.innerHTML = `
+              <div>
+                <div class="card-top">
+                  <span class="card-title">${item.plataforma}</span>
+                  <span class="badge ${badge.clase}">${badge.texto}</span>
+                </div>
+                <div style="font-size:0.8rem; color: var(--text-dim); margin-top:2px;">${item.tipo}</div>
+                <div class="card-details" style="margin-top: 10px;">
+                  <label style="font-size: 0.72rem; text-transform: uppercase;">Correo de acceso</label>
+                  <div class="credential-box">
+                    <span>${item.correo}</span>
+                    <button type="button" class="btn-copy btn-copiar-correo">Copiar</button>
+                  </div>
+                  <label style="font-size: 0.72rem; text-transform: uppercase; margin-top: 4px;">Contraseña</label>
+                  <div class="credential-box">
+                    <span>${isVisible ? item.password : '••••••••'}</span>
+                    <div class="credential-actions">
+                      <button type="button" class="btn-eye btn-toggle-eye">${isVisible ? '🔒' : '👁️'}</button>
+                      <button type="button" class="btn-copy btn-copiar-pass">Copiar</button>
+                    </div>
+                  </div>
+                  <div class="card-row" style="margin-top: 6px;">
+                    <span>Costo Proveedor:</span> <span class="val" style="color: #f87171;">$${(Number(item.costoArs) || 0).toLocaleString('es-AR')} ARS / u$s ${item.costoUsd || 0}</span>
+                  </div>
+                  <div class="card-row"><span>Vencimiento Cuenta:</span> <span class="val">${item.vencimiento}</span></div>
+                </div>
+              </div>
+              <div class="card-actions">
+                <div class="action-group">
+                  <button type="button" class="btn-renew btn-renovar-prov" title="Sumar 30 días">🔄 +30d</button>
+                  <button type="button" class="btn-edit btn-editar-prov">✏️ Editar</button>
+                </div>
+                <button type="button" class="btn-danger-outline btn-borrar-prov">Borrar</button>
+              </div>
+            `;
+
+            card.querySelector('.btn-copiar-correo').addEventListener('click', () => copiarTexto(item.correo));
+            card.querySelector('.btn-copiar-pass').addEventListener('click', () => copiarTexto(item.password));
+            card.querySelector('.btn-toggle-eye').addEventListener('click', () => {
+              contrasenasVisibles[item.id] = !contrasenasVisibles[item.id];
+              filtrar();
+            });
+
+            card.querySelector('.btn-renovar-prov').addEventListener('click', () => {
+              const hoy = new Date();
+              hoy.setHours(0,0,0,0);
+              const fechaActual = new Date(item.vencimiento + 'T00:00:00');
+              let baseFecha = (fechaActual > hoy) ? fechaActual : hoy;
+              baseFecha.setDate(baseFecha.getDate() + 30);
+              item.vencimiento = baseFecha.toISOString().slice(0, 10);
+              guardarStorage();
+              filtrar();
+            });
+
+            card.querySelector('.btn-editar-prov').addEventListener('click', () => {
+              document.getElementById('fpEditId').value = item.id;
+              document.getElementById('fpPlataforma').value = item.plataforma;
+              document.getElementById('fpTipo').value = item.tipo;
+              document.getElementById('fpCorreo').value = item.correo;
+              document.getElementById('fpPassword').value = item.password;
+              document.getElementById('fpCostoArs').value = item.costoArs || 0;
+              document.getElementById('fpCostoUsd').value = item.costoUsd || 0;
+              document.getElementById('fpFecha').value = item.vencimiento;
+              document.getElementById('modalProveedorTitulo').innerText = 'Editar Cuenta Proveedor';
+              modalProveedor.classList.add('active');
+            });
+
+            card.querySelector('.btn-borrar-prov').addEventListener('click', () => {
+              if (confirm('¿Eliminar esta cuenta de proveedor?')) {
+                state.proveedores = state.proveedores.filter(x => x.id !== item.id);
+                guardarStorage();
+                filtrar();
+              }
+            });
+          }
+
+          grid.appendChild(card);
+        });
+      }
+
+      function descargarJSON() {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+        const a = document.createElement('a');
+        a.href = dataStr;
+        a.download = `backup_completo_${new Date().toISOString().slice(0,10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      }
+
+      function cargarJSON(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const imported = JSON.parse(e.target.result);
+            if (imported.clientes && imported.proveedores) {
+              state.clientes = imported.clientes;
+              state.proveedores = imported.proveedores;
+              state.notas = imported.notas || [];
+              guardarStorage();
+              filtrar();
+              alert('¡Base de datos restaurada con éxito!');
+            }
+          } catch (err) {
+            alert('El archivo no tiene el formato correcto.');
+          }
+        };
+        reader.readAsText(file);
+      }
+
+      // Inicio inmediato y seguro
+      filtrar();
+    });
+  </script>
+</body>
+</html>
